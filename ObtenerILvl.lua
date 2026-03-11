@@ -44,9 +44,44 @@ end
 
 -- Update all slots for a specific frame (Character or Inspect)
 local function UpdateAllSlots(prefix, unit)
+    local totalIlvl = 0
+    local itemCount = 0
+
     for _, slotName in ipairs(SLOTS) do
         local button = _G[prefix .. slotName]
         UpdateButtonILvl(button, unit)
+
+        -- Calculate average (ignore Shirt and Tabard)
+        if slotName ~= "ShirtSlot" and slotName ~= "TabardSlot" then
+            local slotId = GetInventorySlotInfo(slotName)
+            local itemLink = GetInventoryItemLink(unit, slotId)
+            if itemLink then
+                local iLevel = C_Item.GetDetailedItemLevelInfo(itemLink)
+                if iLevel and iLevel > 0 then
+                    totalIlvl = totalIlvl + iLevel
+                    itemCount = itemCount + 1
+                end
+            end
+        end
+    end
+
+    -- Update Average Display at the top of the frame
+    local parentFrame = _G[prefix .. "Frame"]
+    if parentFrame then
+        if militaryMode then return end -- Guard against future changes
+        if not parentFrame.avgIlvlText then
+            parentFrame.avgIlvlText = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+            -- Moved to TOPLEFT to avoid overlapping with center buttons
+            parentFrame.avgIlvlText:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 75, -45)
+            parentFrame.avgIlvlText:SetTextColor(1, 0.8, 0) -- Gold
+        end
+
+        if itemCount > 0 then
+            local avg = totalIlvl / itemCount
+            parentFrame.avgIlvlText:SetText("iLvl Promedio: |c00FFFFFF" .. string.format("%.1f", avg) .. "|r")
+        else
+            parentFrame.avgIlvlText:SetText("")
+        end
     end
 end
 
