@@ -19,6 +19,12 @@ local function UpdateButtonILvl(button, unit)
         button.ilvlText:SetTextColor(1, 1, 0) -- Yellow
     end
 
+    -- Clear text initially or if no unit
+    if not unit or not UnitExists(unit) then
+        button.ilvlText:SetText("")
+        return
+    end
+
     local slotId = button:GetID()
     local itemLink = GetInventoryItemLink(unit, slotId)
     
@@ -28,6 +34,8 @@ local function UpdateButtonILvl(button, unit)
             button.ilvlText:SetText(iLevel)
         else
             button.ilvlText:SetText("")
+            -- Request data loading (triggers GET_ITEM_INFO_RECEIVED)
+            C_Item.RequestLoadItemData(itemLink)
         end
     else
         button.ilvlText:SetText("")
@@ -47,6 +55,7 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("UNIT_INVENTORY_CHANGED")
 frame:RegisterEvent("INSPECT_READY")
+frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 
 local currentInspectGuid = nil
 
@@ -63,9 +72,19 @@ frame:SetScript("OnEvent", function(self, event, ...)
         end
     elseif event == "INSPECT_READY" then
         local guid = ...
-        if guid == currentInspectGuid then
+        if guid == currentInspectGuid or (InspectFrame and InspectFrame:IsShown()) then
             UpdateAllSlots("Inspect", "target")
-            currentInspectGuid = nil
+            if guid == currentInspectGuid then
+                currentInspectGuid = nil
+            end
+        end
+    elseif event == "GET_ITEM_INFO_RECEIVED" then
+        -- Refresh visible frames when any item data finishes loading
+        if CharacterFrame:IsShown() then
+            UpdateAllSlots("Character", "player")
+        end
+        if InspectFrame and InspectFrame:IsShown() then
+            UpdateAllSlots("Inspect", "target")
         end
     end
 end)
