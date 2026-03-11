@@ -1,0 +1,7 @@
+## Interface: 120001
+## Title: ObtenerILvl
+## Notes: Obtiene el ILvl del jugador y otros.
+## Author: Pablo
+## Version: 1.0
+
+ObtenerILvl.lua
