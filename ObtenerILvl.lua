@@ -65,22 +65,58 @@ local function UpdateAllSlots(prefix, unit)
         end
     end
 
-    -- Update Average Display at the top of the frame
+    -- Update Average Display "Under the Feet" for a premium look
     local parentFrame = _G[prefix .. "Frame"]
     if parentFrame then
-        if militaryMode then return end -- Guard against future changes
-        if not parentFrame.avgIlvlText then
-            parentFrame.avgIlvlText = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-            -- Moved to TOPLEFT to avoid overlapping with center buttons
-            parentFrame.avgIlvlText:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 75, -45)
-            parentFrame.avgIlvlText:SetTextColor(1, 0.8, 0) -- Gold
+        if not parentFrame.avgIlvlDisplay then
+            -- Create a stylish container for the iLvl
+            local display = CreateFrame("Frame", nil, parentFrame)
+            display:SetSize(140, 36)
+            display:SetFrameLevel(parentFrame:GetFrameLevel() + 10)
+            
+            -- Glassmorphism background effect (semi-transparent dark)
+            local bg = display:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints()
+            bg:SetColorTexture(0, 0, 0, 0.6)
+            
+            -- Elegant golden borders
+            local topBorder = display:CreateTexture(nil, "OVERLAY")
+            topBorder:SetPoint("TOPLEFT")
+            topBorder:SetPoint("TOPRIGHT")
+            topBorder:SetHeight(1.5)
+            topBorder:SetColorTexture(1, 0.85, 0, 0.5)
+
+            local botBorder = display:CreateTexture(nil, "OVERLAY")
+            botBorder:SetPoint("BOTTOMLEFT")
+            botBorder:SetPoint("BOTTOMRIGHT")
+            botBorder:SetHeight(1.5)
+            botBorder:SetColorTexture(1, 0.85, 0, 0.5)
+
+            local text = display:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+            text:SetPoint("CENTER", display, "CENTER", 0, 0)
+            text:SetTextColor(1, 0.85, 0) -- Gold
+            text:SetShadowColor(0, 0, 0, 1)
+            text:SetShadowOffset(1, -1)
+            
+            parentFrame.avgIlvlDisplay = display
+            parentFrame.avgIlvlText = text
+
+            -- Position "under the feet" of the model
+            local modelFrame = (prefix == "Inspect") and _G["InspectModelFrame"] or _G["CharacterModelFrame"]
+            if modelFrame then
+                display:SetPoint("BOTTOM", modelFrame, "BOTTOM", 0, 45)
+            else
+                -- Fallback if model frame is not found (unlikely in retail)
+                display:SetPoint("BOTTOM", parentFrame, "BOTTOM", 0, 100)
+            end
         end
 
         if itemCount > 0 then
             local avg = totalIlvl / itemCount
-            parentFrame.avgIlvlText:SetText("iLvl Promedio: |c00FFFFFF" .. string.format("%.1f", avg) .. "|r")
+            parentFrame.avgIlvlText:SetText("iLvl: |cffffffff" .. string.format("%.1f", avg) .. "|r")
+            parentFrame.avgIlvlDisplay:Show()
         else
-            parentFrame.avgIlvlText:SetText("")
+            parentFrame.avgIlvlDisplay:Hide()
         end
     end
 end
